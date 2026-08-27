@@ -1,0 +1,70 @@
+services:
+  cockroachdb:
+    image: cockroachdb/cockroach:v26.3.0
+    command: start-single-node --insecure
+    ports:
+      - '26257:26257'
+      - '8080:8080'
+    volumes:
+      - cockroach-data:/cockroach/cockroach-data
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'cockroach',
+          'sql',
+          '--insecure',
+          '--host=localhost:26257',
+          '--execute=SELECT 1',
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+
+  cockroach-init:
+    image: cockroachdb/cockroach:v26.3.0
+    depends_on:
+      cockroachdb:
+        condition: service_healthy
+    volumes:
+      - ./docker/cockroach/init.sql:/init.sql:ro
+    entrypoint:
+      [
+        'cockroach',
+        'sql',
+        '--insecure',
+        '--host=cockroachdb:26257',
+        '--file=/init.sql',
+      ]
+
+  db-setup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      cockroach-init:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://root@cockroachdb:26257/developer_profile?sslmode=disable
+    command:
+      [
+        'sh',
+        '-c',
+        'pnpm exec prisma migrate deploy && pnpm exec prisma db seed',
+      ]
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      db-setup:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgresql://root@cockroachdb:26257/developer_profile?sslmode=disable
+    ports:
+      - '3000:3000'
+
+volumes:
+  cockroach-data:
