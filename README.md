@@ -4,6 +4,11 @@ Backend-приложение в формате цифровой визитки �
 
 Приложение предоставляет GraphQL API с информацией о профиле, профессиональных ссылках, навыках, опыте работы, достижениях и проектах. Для просмотра и выполнения запросов используется Apollo Sandbox.
 
+## Ссылки
+
+- Production / Apollo Sandbox: https://developer-profile-backend.onrender.com/graphql
+- GitHub: https://github.com/AleksandrKotov1997/developer-profile-backend
+
 ## Возможности
 
 - получение профиля разработчика через GraphQL;
